@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoShield — Crypto Risk Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    :root {
+      --bg:      #03050a;
+      --surface: rgba(255,255,255,0.032);
+      --border:  rgba(0,200,255,0.1);
+      --border2: rgba(0,200,255,0.22);
+      --cyan:    #00c8ff;
+      --cyan2:   #00e5ff;
+      --green:   #00ff9d;
+      --yellow:  #ffc107;
+      --red:     #ff3b5c;
+      --orange:  #ff7043;
+      --grey:    #3d5165;
+      --text:    #d8eaf5;
+      --text2:   #7a99b0;
+      --text3:   #3d5165;
+      --ff-head: 'Rajdhani', sans-serif;
+      --ff-mono: 'Share Tech Mono', monospace;
+      --r:  12px;
+      --r2: 18px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--ff-mono);
+      font-size: 13px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 5%,  rgba(0,200,255,.07) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 50% at 90% 90%, rgba(0,255,157,.04) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 30% at 50% 50%, rgba(255,59,92,.025) 0%, transparent 65%);
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .page { max-width: 900px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+    /* Header */
+    header { padding: 52px 0 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+    .logo-row { display: flex; align-items: center; gap: 14px; }
+
+    .logo-shield {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, rgba(0,200,255,.15), rgba(0,255,157,.1));
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      animation: shieldPulse 4s ease-in-out infinite;
+    }
+    @keyframes shieldPulse {
+      0%,100% { box-shadow: 0 0 24px rgba(0,200,255,.2); }
+      50%      { box-shadow: 0 0 48px rgba(0,200,255,.4), 0 0 80px rgba(0,200,255,.1); }
+    }
+
+    h1 {
+      font-family: var(--ff-head);
+      font-size: 38px; font-weight: 700; letter-spacing: .04em;
+      background: linear-gradient(90deg, var(--cyan2) 0%, var(--green) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .tagline { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--text3); }
+
+    /* Param nav */
+    .param-nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 32px 0 28px; }
+    .param-pill {
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 11px; letter-spacing: .06em;
+      border: 1px solid var(--border); color: var(--text3);
+      background: var(--surface); white-space: nowrap; transition: all .2s;
+    }
+    .param-pill.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,200,255,.08); }
+
+    /* Search */
+    .search-zone {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--r2); padding: 28px 24px;
+      backdrop-filter: blur(20px); margin-bottom: 28px;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .search-zone:focus-within {
+      border-color: rgba(0,200,255,.4);
+      box-shadow: 0 0 0 1px rgba(0,200,255,.12), 0 12px 48px rgba(0,200,255,.08);
+    }
+    .search-lbl { display: block; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+    .search-row { display: flex; gap: 10px; }
+    .input-wrap { flex: 1; position: relative; }
+
+    #tokenInput {
+      width: 100%; height: 52px;
+      background: rgba(0,0,0,.45); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 0 56px 0 16px;
+      color: var(--text); font-family: var(--ff-mono); font-size: 14px;
+      outline: none; transition: border-color .2s;
+    }
+    #tokenInput:focus { border-color: var(--cyan); }
+    #tokenInput::placeholder { color: var(--text3); }
+
+    .chain-tag {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 10px; display: none; pointer-events: none;
+    }
+    .chain-tag.evm  { background: rgba(98,126,234,.15);  color:#8fa2e8; border:1px solid rgba(98,126,234,.3); }
+    .chain-tag.sol  { background: rgba(153,69,255,.15);  color:#b57aff; border:1px solid rgba(153,69,255,.3); }
+    .chain-tag.tron { background: rgba(255,6,6,.15);     color:#ff6b6b; border:1px solid rgba(255,6,6,.3); }
+
+    #calcBtn {
+      height: 52px; min-width: 170px;
+      background: linear-gradient(135deg, #008fba, #00c49a);
+      border: none; border-radius: var(--r);
+      color: #000; font-family: var(--ff-head);
+      font-size: 14px; font-weight: 700; letter-spacing: .06em;
+      cursor: pointer; transition: opacity .2s, transform .15s, box-shadow .2s;
+    }
+    #calcBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 32px rgba(0,200,255,.3); }
+    #calcBtn:active { transform: none; }
+    #calcBtn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .err-line { margin-top: 10px; font-size: 12px; color: var(--red); display: none; }
+
+    /* Loading */
+    .loading-state { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r2); padding: 52px; text-align: center; margin-bottom: 20px; display: none; }
+    .loading-state.show { display: block; }
+    .spinner { width: 36px; height: 36px; border: 2px solid rgba(0,200,255,.12); border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg { color: var(--text2); font-size: 13px; animation: blink 1.5s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+    /* N/A card */
+    .na-card { background: var(--surface); border: 1px solid rgba(61,81,101,.35); border-radius: var(--r2); padding: 40px; text-align: center; margin-bottom: 20px; display: none; }
+    .na-card.show { display: block; }
+    .na-icon  { font-size: 32px; margin-bottom: 12px; }
+    .na-title { font-family: var(--ff-head); font-size: 18px; color: var(--grey); margin-bottom: 8px; }
+    .na-reason{ font-size: 12px; color: var(--text3); line-height: 1.6; }
+
+    /* Results */
+    #resultsPanel { display: none; animation: fadeUp .4s ease; }
+    #resultsPanel.show { display: block; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Score hero */
+    .score-hero {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--r2); padding: 36px 28px 28px;
+      text-align: center; position: relative; overflow: hidden;
+      margin-bottom: 20px; backdrop-filter: blur(20px);
+    }
+    .score-hero::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 55% 55% at 50% 20%, var(--hero-glow, transparent), transparent 70%);
+    }
+    .score-coin-name { font-size: 10px; letter-spacing:.18em; text-transform:uppercase; color: var(--text3); margin-bottom: 12px; }
+    .score-ring {
+      width: 140px; height: 140px; border-radius: 50%;
+      border: 3px solid var(--ring-color, var(--grey));
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin: 0 auto 18px; position: relative; transition: border-color .5s, box-shadow .5s;
+    }
+    .score-ring::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 1px solid var(--ring-color, transparent); opacity: .25; }
+    .score-big { font-family: var(--ff-head); font-size: 64px; font-weight: 700; line-height: 1; transition: color .4s; }
+    .score-sub { font-size: 10px; color: var(--text3); letter-spacing:.1em; }
+    .risk-chip { display: inline-block; padding: 8px 28px; border-radius: 30px; font-family: var(--ff-head); font-size: 15px; font-weight: 700; letter-spacing:.08em; text-transform: uppercase; margin-bottom: 10px; transition: all .3s; }
+    .risk-chip.low    { background:rgba(0,255,157,.1);  color:var(--green);  border:1px solid rgba(0,255,157,.3); }
+    .risk-chip.medium { background:rgba(255,193,7,.1);  color:var(--yellow); border:1px solid rgba(255,193,7,.3); }
+    .risk-chip.high   { background:rgba(255,59,92,.1);  color:var(--red);    border:1px solid rgba(255,59,92,.3); }
+    .risk-chip.na     { background:rgba(61,81,101,.1);  color:var(--grey);   border:1px solid rgba(61,81,101,.3); }
+
+    /* Detail card */
+    .detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; margin-bottom: 20px; backdrop-filter: blur(20px); }
+    .detail-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: rgba(0,200,255,.03); }
+    .detail-title-row { display: flex; align-items: center; gap: 10px; }
+    .param-badge { font-size: 9px; letter-spacing:.14em; text-transform:uppercase; padding: 3px 8px; border-radius:8px; background: rgba(0,200,255,.1); color: var(--cyan); border: 1px solid rgba(0,200,255,.2); }
+    .detail-title { font-family: var(--ff-head); font-size: 16px; font-weight: 700; letter-spacing:.04em; }
+    .detail-score { font-family: var(--ff-head); font-size: 28px; font-weight: 700; }
+    .detail-score.s1 { color: var(--green); }
+    .detail-score.s2 { color: var(--yellow); }
+    .detail-score.s3 { color: var(--red); }
+    .detail-body { padding: 20px; }
+
+    /* Metrics */
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 500px) { .metrics { grid-template-columns: 1fr; } }
+    .metric { background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; }
+    .metric-label { font-size: 9px; letter-spacing:.14em; text-transform:uppercase; color: var(--text3); margin-bottom: 6px; }
+    .metric-value { font-family: var(--ff-head); font-size: 22px; font-weight: 700; color: var(--text); }
+    .metric-value.highlight { color: var(--cyan); }
+    .metric-value.warn      { color: var(--yellow); }
+    .metric-value.danger    { color: var(--red); }
+    .metric-value.safe      { color: var(--green); }
+    .metric-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+    /* Breakdown */
+    .breakdown { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .bd-chip { padding: 5px 12px; border-radius: 20px; font-size: 11px; }
+    .bd-normal   { background:rgba(0,200,255,.08);  color:var(--cyan);   border:1px solid rgba(0,200,255,.2); }
+    .bd-exchange { background:rgba(255,193,7,.08);  color:var(--yellow); border:1px solid rgba(255,193,7,.2); }
+    .bd-burn     { background:rgba(61,81,101,.15);  color:var(--text3);  border:1px solid rgba(61,81,101,.3); }
+
+    /* Penalty */
+    .penalty-notice { background: rgba(255,193,7,.06); border: 1px solid rgba(255,193,7,.2); border-radius: var(--r); padding: 10px 14px; font-size: 11px; color: var(--yellow); display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+
+    /* Whales */
+    .whale-section { margin-top: 16px; }
+    .whale-title { font-size: 10px; letter-spacing:.14em; text-transform:uppercase; color: var(--orange); margin-bottom: 8px; }
+    .whale-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,112,67,.06); border: 1px solid rgba(255,112,67,.18); border-radius: 8px; margin-bottom: 6px; font-size: 11px; }
+    .whale-addr { color: var(--text2); }
+    .whale-pct  { color: var(--orange); font-weight: 700; }
+
+    /* Source row */
+    .source-row { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--border); font-size: 10px; color: var(--text3); letter-spacing:.08em; }
+    .source-tag { color: var(--cyan); opacity:.7; }
+
+    /* Coming soon */
+    .coming-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 48px; }
+    .coming-card { background: var(--surface); border: 1px solid rgba(255,255,255,.04); border-radius: var(--r); padding: 18px 16px; opacity: .45; }
+    .coming-num  { font-size: 9px; letter-spacing:.14em; color:var(--text3); margin-bottom:4px; }
+    .coming-name { font-family: var(--ff-head); font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+    .coming-tag  { font-size: 9px; letter-spacing:.1em; padding:3px 8px; border-radius:8px; background:rgba(255,255,255,.05); color:var(--text3); border: 1px solid rgba(255,255,255,.06); display: inline-block; }
+
+    @keyframes popIn { 0%{transform:scale(.3);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+    .pop { animation: popIn .5s cubic-bezier(.34,1.56,.64,1); }
+
+    footer { border-top: 1px solid rgba(255,255,255,.04); padding: 28px 0 36px; text-align: center; font-size: 10px; letter-spacing:.06em; color: var(--text3); }
+
+    @media (max-width:520px) {
+      h1 { font-size:26px; }
+      .search-row { flex-direction:column; }
+      #calcBtn { width:100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-shield">🛡</div>
+      <h1>CryptoShield</h1>
+    </div>
+    <div class="tagline">On-Chain Risk Intelligence</div>
+  </header>
+
+  <nav class="param-nav">
+    <div class="param-pill active">01 · Holder Concentration</div>
+    <div class="param-pill">02 · Liquidity Safety</div>
+    <div class="param-pill">03 · Developer Activity</div>
+    <div class="param-pill">04 · Token Distribution</div>
+    <div class="param-pill">05 · Trading Behavior</div>
+  </nav>
+
+  <div class="search-zone">
+    <label class="search-lbl" for="tokenInput">Token name or contract address</label>
+    <div class="search-row">
+      <div class="input-wrap">
+        <input id="tokenInput" type="text" autocomplete="off" spellcheck="false"
+               placeholder="e.g.  BTC  ·  ETH  ·  0xabc…  ·  Solana address" />
+        <span id="chainTag" class="chain-tag"></span>
+      </div>
+      <button id="calcBtn">Calculate Risk</button>
+    </div>
+    <div id="errLine" class="err-line"></div>
+  </div>
+
+  <div id="loadingState" class="loading-state">
+    <div class="spinner"></div>
+    <div class="loading-msg">Fetching holder data…</div>
+  </div>
+
+  <div id="naCard" class="na-card">
+    <div class="na-icon">◎</div>
+    <div class="na-title">Data Unavailable</div>
+    <div class="na-reason" id="naReason">—</div>
+  </div>
+
+  <div id="resultsPanel">
+
+    <div class="score-hero" id="scoreHero">
+      <div class="score-coin-name" id="scoreCoinName"></div>
+      <div class="score-ring" id="scoreRing">
+        <div class="score-big" id="scoreBig">—</div>
+        <div class="score-sub">/ 3</div>
+      </div>
+      <div class="risk-chip na" id="riskChip">—</div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-header">
+        <div class="detail-title-row">
+          <span class="param-badge">PARAM 01</span>
+          <span class="detail-title">Holder Concentration</span>
+        </div>
+        <div class="detail-score" id="detailScore">—</div>
+      </div>
+      <div class="detail-body">
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">Top 50 Concentration</div>
+            <div class="metric-value" id="m-top50">—</div>
+            <div class="metric-sub">% of circulating supply</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Circulating Supply</div>
+            <div class="metric-value highlight" id="m-circ">—</div>
+            <div class="metric-sub">total minus burned</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Exchange-Held</div>
+            <div class="metric-value" id="m-exch">—</div>
+            <div class="metric-sub">% held on CEX wallets</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Burned Supply</div>
+            <div class="metric-value" id="m-burn">—</div>
+            <div class="metric-sub">% permanently removed</div>
+          </div>
+        </div>
+
+        <div class="breakdown" id="breakdownRow"></div>
+        <div class="penalty-notice" id="penaltyNotice" style="display:none">
+          <span>⚠</span>
+          <span>Exchange-held supply exceeds 40% — significant latent sell pressure. Risk score increased by +1 (capped at 3).</span>
+        </div>
+        <div class="whale-section" id="whaleSection" style="display:none">
+          <div class="whale-title">⚠ Wallets Holding &gt;10% of Circulating Supply</div>
+          <div id="whaleList"></div>
+        </div>
+        <div class="source-row">
+          <span>Data source</span>
+          <span class="source-tag" id="sourceTag">—</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="coming-grid">
+      <div class="coming-card"><div class="coming-num">PARAM 02</div><div class="coming-name">Liquidity Safety</div><div class="coming-tag">Coming soon</div></div>
+      <div class="coming-card"><div class="coming-num">PARAM 03</div><div class="coming-name">Developer Activity</div><div class="coming-tag">Coming soon</div></div>
+      <div class="coming-card"><div class="coming-num">PARAM 04</div><div class="coming-name">Token Distribution</div><div class="coming-tag">Coming soon</div></div>
+      <div class="coming-card"><div class="coming-num">PARAM 05</div><div class="coming-name">Trading Behavior</div><div class="coming-tag">Coming soon</div></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>CryptoShield · Moralis · Etherscan · Solscan · DexScreener · CoinGecko · Not financial advice</footer>
+
+<script type="module">
+import { analyzeHolderConcentration } from './param1.js';
+
+const tokenInput   = document.getElementById('tokenInput');
+const calcBtn      = document.getElementById('calcBtn');
+const chainTag     = document.getElementById('chainTag');
+const errLine      = document.getElementById('errLine');
+const loadingState = document.getElementById('loadingState');
+const naCard       = document.getElementById('naCard');
+const naReason     = document.getElementById('naReason');
+const resultsPanel = document.getElementById('resultsPanel');
+const scoreHero    = document.getElementById('scoreHero');
+const scoreCoinName= document.getElementById('scoreCoinName');
+const scoreRing    = document.getElementById('scoreRing');
+const scoreBig     = document.getElementById('scoreBig');
+const riskChip     = document.getElementById('riskChip');
+const detailScore  = document.getElementById('detailScore');
+const mTop50       = document.getElementById('m-top50');
+const mCirc        = document.getElementById('m-circ');
+const mExch        = document.getElementById('m-exch');
+const mBurn        = document.getElementById('m-burn');
+const breakdownRow = document.getElementById('breakdownRow');
+const penaltyNotice= document.getElementById('penaltyNotice');
+const whaleSection = document.getElementById('whaleSection');
+const whaleList    = document.getElementById('whaleList');
+const sourceTag    = document.getElementById('sourceTag');
+
+const COLOR  = { 1:'#00ff9d', 2:'#ffc107', 3:'#ff3b5c' };
+const GLOW   = { 1:'rgba(0,255,157,.18)', 2:'rgba(255,193,7,.15)', 3:'rgba(255,59,92,.18)' };
+const CHIP   = { 1:'low', 2:'medium', 3:'high' };
+const LABEL  = { 1:'Low Risk', 2:'Medium Risk', 3:'High Risk' };
+const DSCORE = { 1:'s1', 2:'s2', 3:'s3' };
+
+function pctClass(n)  { return +n>50?'danger':+n>30?'warn':'safe'; }
+function exchClass(n) { return +n>40?'warn':'highlight'; }
+function trunc(a)     { return a.length>18?a.slice(0,9)+'…'+a.slice(-6):a; }
+
+// Chain badge
+tokenInput.addEventListener('input', () => {
+  const v = tokenInput.value.trim();
+  errLine.style.display = 'none';
+  if (!v) { chainTag.style.display='none'; return; }
+  if (/^0x[a-fA-F0-9]{40}$/.test(v))            { chainTag.textContent='EVM';  chainTag.className='chain-tag evm';  chainTag.style.display='block'; }
+  else if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)) { chainTag.textContent='SOL';  chainTag.className='chain-tag sol';  chainTag.style.display='block'; }
+  else if (/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(v))   { chainTag.textContent='TRX';  chainTag.className='chain-tag tron'; chainTag.style.display='block'; }
+  else chainTag.style.display='none';
+});
+
+tokenInput.addEventListener('keydown', e => { if(e.key==='Enter') calcBtn.click(); });
+
+function hideAll() {
+  loadingState.classList.remove('show');
+  naCard.classList.remove('show');
+  resultsPanel.classList.remove('show');
+  errLine.style.display='none';
+}
+
+function renderResult(res, input) {
+  hideAll();
+  if (res.status !== 'success') {
+    naCard.classList.add('show');
+    naReason.textContent = res.reason ?? 'Data unavailable for this token.';
+    return;
+  }
+
+  resultsPanel.classList.add('show');
+
+  const { score, top50Pct, exchangePct, burnedPct, circulatingSupply,
+          whaleWallets, holderBreakdown, exchangePenaltyApplied, source, chain } = res;
+
+  // Hero
+  scoreCoinName.textContent = input.toUpperCase() + (chain ? '  ·  ' + chain.toUpperCase() : '');
+  scoreRing.style.setProperty('--ring-color', COLOR[score] ?? '#3d5165');
+  scoreHero.style.setProperty('--hero-glow', GLOW[score] ?? 'transparent');
+  scoreBig.style.color = COLOR[score] ?? 'var(--text2)';
+  scoreBig.textContent = score ?? '—';
+  scoreBig.classList.remove('pop'); void scoreBig.offsetWidth; scoreBig.classList.add('pop');
+  riskChip.textContent = LABEL[score] ?? '—';
+  riskChip.className   = 'risk-chip ' + (CHIP[score] ?? 'na');
+
+  // Detail
+  detailScore.textContent = score ?? '—';
+  detailScore.className   = 'detail-score ' + (DSCORE[score] ?? '');
+
+  mTop50.textContent = top50Pct + '%';  mTop50.className = 'metric-value ' + pctClass(top50Pct);
+  mCirc.textContent  = circulatingSupply; mCirc.className = 'metric-value highlight';
+  mExch.textContent  = exchangePct + '%'; mExch.className = 'metric-value ' + exchClass(exchangePct);
+  mBurn.textContent  = burnedPct + '%';   mBurn.className = 'metric-value';
+
+  breakdownRow.innerHTML =
+    `<div class="bd-chip bd-normal">◈ ${holderBreakdown.normal} normal</div>` +
+    `<div class="bd-chip bd-exchange">⬡ ${holderBreakdown.exchange} exchange</div>` +
+    `<div class="bd-chip bd-burn">◌ ${holderBreakdown.burn} burn</div>`;
+
+  penaltyNotice.style.display = exchangePenaltyApplied ? 'flex' : 'none';
+
+  if (whaleWallets?.length) {
+    whaleSection.style.display = 'block';
+    whaleList.innerHTML = whaleWallets.map(w =>
+      `<div class="whale-row"><span class="whale-addr">${trunc(w.address)}</span><span class="whale-pct">${w.pct}%</span></div>`
+    ).join('');
+  } else {
+    whaleSection.style.display = 'none';
+  }
+
+  sourceTag.textContent = source ?? '—';
+}
+
+calcBtn.addEventListener('click', async () => {
+  const val = tokenInput.value.trim();
+  if (!val) { errLine.textContent='Please enter a coin name or contract address.'; errLine.style.display='block'; return; }
+  hideAll();
+  calcBtn.disabled = true; calcBtn.textContent = 'Analyzing…';
+  loadingState.classList.add('show');
+  try {
+    const result = await analyzeHolderConcentration(val, '/api/proxy');
+    renderResult(result, val);
+  } catch(e) {
+    hideAll();
+    errLine.textContent = 'Unexpected error: ' + e.message;
+    errLine.style.display = 'block';
+  } finally {
+    calcBtn.disabled = false; calcBtn.textContent = 'Calculate Risk';
+  }
+});
+</script>
+
+</body>
+</html>
